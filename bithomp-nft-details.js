@@ -9,10 +9,8 @@ const { createClient } = require('redis');
 const app = express();
 const PORT = 3002;
 
-// Set up the Redis client
 const redisClient = createClient({
-  password: process.env.REDIS_PASSWORD,
-  socket: { host: '127.0.0.1', port: 6379 }
+  url: process.env.REDIS_URL 
 });
 redisClient.on('error', err => console.log('Redis Client Error', err));
 redisClient.connect();
