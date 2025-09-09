@@ -1,0 +1,13 @@
+{
+  "name": "render-api-backup",
+  "version": "1.0.0",
+  "description": "Master proxy for TokenCanvas API",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js"
+  },
+  "dependencies": {
+    "express": "^4.18.2",
+    "http-proxy-middleware": "^2.0.6"
+  }
+}
