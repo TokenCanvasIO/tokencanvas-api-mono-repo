@@ -17,7 +17,7 @@ cloudinary.config({
 
 app.use(cors());
 
-app.get('/api/cloudinary/optimize', async (req, res) => {
+app.get('/optimize', async (req, res) => {
   const imageUrl = req.query.image_url;
   if (!imageUrl) return res.status(400).send('image_url is required.');
   
