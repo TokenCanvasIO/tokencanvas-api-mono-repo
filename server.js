@@ -4,7 +4,15 @@ const { createProxyMiddleware } = require('http-proxy-middleware');
 const app = express();
 const PORT = process.env.PORT || 10000;
 
-// This is the simplest possible proxy. It forwards the path untouched.
+// --- DEBUGGING MIDDLEWARE ---
+// This will print the path of EVERY request that hits the server.
+app.use((req, res, next) => {
+  console.log(`[DEBUG] Request received for path: ${req.path}`);
+  next(); // Continue to the next middleware
+});
+// --- END DEBUGGING ---
+
+// Your existing proxy rules (unchanged)
 app.use('/api/bithomp/nft', createProxyMiddleware({ target: 'http://localhost:3002', changeOrigin: true }));
 app.use('/api/coingecko', createProxyMiddleware({ target: 'http://localhost:3003', changeOrigin: true }));
 app.use('/api/onthedex', createProxyMiddleware({ target: 'http://localhost:3004', changeOrigin: true }));
