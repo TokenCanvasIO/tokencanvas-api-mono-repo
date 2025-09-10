@@ -26,7 +26,7 @@ const createStableCacheKey = (prefix, params) => {
   return `${prefix}_${JSON.stringify(sortedParams)}`;
 };
 
-app.get('/api/bithomp/nft/:nftId', async (req, res) => {
+app.get('/:nftId', async (req, res) => {
   try {
     const { nftId } = req.params;
     if (!nftId) {
