@@ -25,7 +25,7 @@ const createStableCacheKey = (prefix, params) => {
   return `${prefix}_${JSON.stringify(sortedParams)}`;
 };
 
-app.post('/api/coingecko/coins/markets', async (req, res) => {
+app.post('/coins/markets', async (req, res) => {
   try {
     const params = { ...req.body };
     const cacheKey = createStableCacheKey('coingecko_markets', params);

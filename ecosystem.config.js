@@ -1,5 +1,12 @@
 module.exports = {
   apps : [
+    // --- ADD THIS NEW PROXY SERVER AT THE TOP ---
+    {
+      name: 'main-proxy',
+      script: 'server.js'
+    },
+    // ------------------------------------------
+    
     { name: "coingecko", script: "./coingecko-proxy.js" },
     { name: "bithomp-details", script: "./bithomp-nft-details.js" },
     { name: "bithomp-main", script: "./bithomp-nft.js" },
