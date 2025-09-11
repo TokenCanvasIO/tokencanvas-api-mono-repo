@@ -7,12 +7,7 @@ const { createClient } = require('redis');
 const app = express();
 const PORT = 3003;
 
-const redisOptions = {
-  socket: { host: '127.0.0.1', port: 6379 }
-};
-if (process.env.NODE_ENV === 'production') {
-  redisOptions.password = process.env.REDIS_PASSWORD;
-}
+// --- FINAL, UNIFIED REDIS CONNECTION ---
 const redisClient = createClient({
   url: process.env.REDIS_CONNECTION_URL 
 });
@@ -52,7 +47,6 @@ app.post('/coins/markets', async (req, res) => {
   }
 });
 
-// --- NEW ENDPOINT: Get Tickers for a specific coin ---
 app.get('/coins/:id/tickers', async (req, res) => {
     const { id } = req.params;
     const cacheKey = `coingecko_tickers_${id}`;
@@ -67,7 +61,7 @@ app.get('/coins/:id/tickers', async (req, res) => {
         const response = await axios.get(apiUrl, {
             params: { x_cg_pro_api_key: process.env.COINGECKO_API_KEY }
         });
-        await redisClient.setEx(cacheKey, 900, JSON.stringify(response.data)); // Cache for 15 minutes
+        await redisClient.setEx(cacheKey, 900, JSON.stringify(response.data));
         res.status(200).json(response.data);
     } catch (error) {
         console.error('CoinGecko Tickers Error:', error.message);
@@ -76,7 +70,6 @@ app.get('/coins/:id/tickers', async (req, res) => {
 });
     
 app.get('/*', async (req, res) => {
-  // This is a general catch-all for other GET requests
   try {
     const endpoint = req.path;
     const params = { ...req.query };
