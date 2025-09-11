@@ -8,7 +8,7 @@ const app = express();
 const PORT = 3010;
 
 const redisClient = createClient({
-  url: process.env.REDIS_URL 
+  url: process.env.REDIS_CONNECTION_URL 
 });
 redisClient.on('error', err => console.log('Redis Client Error', err));
 redisClient.connect();

@@ -13,7 +13,9 @@ const redisOptions = {
 if (process.env.NODE_ENV === 'production') {
   redisOptions.password = process.env.REDIS_PASSWORD;
 }
-const redisClient = createClient(redisOptions);
+const redisClient = createClient({
+  url: process.env.REDIS_CONNECTION_URL 
+});
 redisClient.on('error', err => console.log('Redis Client Error', err));
 redisClient.connect();
 
