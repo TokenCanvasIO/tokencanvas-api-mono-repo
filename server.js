@@ -29,6 +29,9 @@ app.use('/api/twitter', createProxyMiddleware(createProxyOptions('http://localho
 app.use('/api/xrpscan', createProxyMiddleware(createProxyOptions('http://localhost:3008', '/api/xrpscan')));
 app.use('/api/nfts', createProxyMiddleware(createProxyOptions('http://localhost:3010', '/api/nfts')));
 
+// --- ADDED THIS NEW LINE FOR THE ADVANCED BITHOMP SERVICE ---
+app.use('/api/bithomp/advanced', createProxyMiddleware(createProxyOptions('http://localhost:3011', '/api/bithomp/advanced')));
+
 app.listen(PORT, () => {
   console.log(`Main proxy server listening on port ${PORT}`);
 });
