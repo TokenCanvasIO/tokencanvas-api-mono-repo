@@ -1,4 +1,4 @@
-// This is your new /edge-functions/bithomp-nft.js file
+// This is your brand new /edge-functions/bithomp-nft.js file
 
 // This is the standard entry point for an Edge function.
 // It receives the 'request' object, which contains the URL.
