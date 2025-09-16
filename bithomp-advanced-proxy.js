@@ -7,13 +7,6 @@ const { createClient } = require('redis');
 const app = express();
 const PORT = 3011;
 
-// --- Redis Connection (Conditional Password) ---
-const redisOptions = {
-  socket: { host: '127.0.0.1', port: 6379 }
-};
-if (process.env.NODE_ENV === 'production') {
-  redisOptions.password = process.env.REDIS_PASSWORD;
-}
 const redisClient = createClient({
   url: process.env.REDIS_CONNECTION_URL 
 });
@@ -22,8 +15,8 @@ redisClient.connect();
 
 app.use(cors());
 
-// --- ENDPOINT 1: Get Top Holders for an NFT Collection ---
-app.get('/holders/:issuer/:taxon', async (req, res) => {
+// --- FIX: THE ROUTE NOW MATCHES THE FULL PATH FROM THE PROXY ---
+app.get('/api/bithomp/advanced/holders/:issuer/:taxon', async (req, res) => {
   const { issuer, taxon } = req.params;
   const cacheKey = `bithomp_holders_${issuer}_${taxon}`;
   try {
@@ -38,6 +31,7 @@ app.get('/holders/:issuer/:taxon', async (req, res) => {
 
     const apiUrl = `https://bithomp.com/api/v2/nfts/holders`;
     const response = await axios.get(apiUrl, {
+      // --- FIX: CORRECTED THE API KEY HEADER NAME ---
       headers: { 'x-bithomp-token': apiKey },
       params: { issuer, taxon, limit: 100 }
     });
@@ -49,8 +43,8 @@ app.get('/holders/:issuer/:taxon', async (req, res) => {
   }
 });
 
-// --- NEW ENDPOINT 2: Get Issuer Activity ---
-app.get('/activity/:issuer', async (req, res) => {
+// --- FIX: THE ROUTE NOW MATCHES THE FULL PATH FROM THE PROXY ---
+app.get('/api/bithomp/advanced/activity/:issuer', async (req, res) => {
   const { issuer } = req.params;
   const cacheKey = `bithomp_activity_${issuer}`;
   try {
@@ -66,7 +60,7 @@ app.get('/activity/:issuer', async (req, res) => {
     const apiUrl = `https://bithomp.com/api/v2/nfts/issuer-activity`;
     const response = await axios.get(apiUrl, {
       headers: { 'x-bithomp-token': apiKey },
-      params: { issuer, limit: 50 } // Fetch the last 50 activity events
+      params: { issuer, limit: 50 }
     });
     await redisClient.setEx(cacheKey, 900, JSON.stringify(response.data));
     res.status(200).json(response.data);

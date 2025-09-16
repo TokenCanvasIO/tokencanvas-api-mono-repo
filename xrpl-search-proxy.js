@@ -1,3 +1,4 @@
+console.log("--- EXECUTING LATEST VERSION: xrpl-search-proxy.js (v.FINAL) ---");
 require('dotenv').config();
 const express = require('express');
 const axios = require('axios');
@@ -5,11 +6,19 @@ const cors = require('cors');
 const { createClient } = require('redis');
 
 const app = express();
-const PORT = 3016;
+const PORT = 3018; 
 
-const redisClient = createClient({
-  url: process.env.REDIS_CONNECTION_URL
-});
+// Build the Redis configuration dynamically.
+const redisConfig = {
+  socket: { host: '127.0.0.1', port: 6379 }
+};
+
+// This now checks if the password exists AND is not an empty string.
+if (process.env.REDIS_PASSWORD && process.env.REDIS_PASSWORD.length > 0) {
+  redisConfig.password = process.env.REDIS_PASSWORD;
+}
+
+const redisClient = createClient(redisConfig);
 redisClient.on('error', err => console.log('[XRPL Search] Redis Client Error', err));
 redisClient.connect();
 
@@ -27,9 +36,12 @@ async function getFullTokenList() {
     }
 
     console.log('[XRPL Search] Cache MISS for full token list. Fetching from OnTheDEX...');
-    // --- THIS IS THE CORRECTED URL ---
     const response = await axios.get('https://api.onthedex.live/api/v2/tokens');
     const tokens = response.data?.tokens || [];
+    
+    if (tokens.length > 0) {
+      console.log('[XRPL Search] Sample token received from OnTheDEX:', JSON.stringify(tokens[0]));
+    }
     
     await redisClient.setEx(ONTHEDEX_TOKEN_LIST_CACHE_KEY, 3600, JSON.stringify(tokens));
     
@@ -50,10 +62,13 @@ app.get('/search', async (req, res) => {
     const allTokens = await getFullTokenList();
     const searchTerm = query.toLowerCase();
 
-    const filteredTokens = allTokens.filter(token => 
-      token.currency.toLowerCase().includes(searchTerm) || 
-      (token.name && token.name.toLowerCase().includes(searchTerm))
-    );
+    const filteredTokens = allTokens.filter(token => {
+      const currencyMatch = token.currency && token.currency.toLowerCase().includes(searchTerm);
+      const nameMatch = token.name && token.name.toLowerCase().includes(searchTerm);
+      return currencyMatch || nameMatch;
+    });
+
+    console.log(`[XRPL Search] Found ${filteredTokens.length} matches for "${query}"`);
 
     const formattedAssets = filteredTokens.slice(0, 25).map(asset => ({
         id: `${asset.currency}.${asset.issuer}`,

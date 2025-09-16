@@ -1,0 +1,44 @@
+# Main server block for all domains, handling HTTPS traffic
+server {
+    listen 443 ssl http2;
+    listen [::]:443 ssl http2;
+    
+    server_name tokencanvas.io www.tokencanvas.io xrpmemecoins.com www.xrpmemecoins.com origin.tokencanvas.io;
+
+    root /var/www/html;
+    index index.html;
+
+    location / {
+        try_files $uri $uri/ /index.html;
+    }
+
+    # --- API Proxy Rules ---
+    location /api/bithomp/nft/ { proxy_pass http://localhost:3002; }
+    location /api/coingecko/ { proxy_pass http://localhost:3003; }
+    location /api/onthedex/ { proxy_pass http://localhost:3004; }
+    location /api/bithomp/main/ { proxy_pass http://localhost:3005; }
+    location /api/cloudinary/ { proxy_pass http://localhost:3006; }
+    location /api/twitter/ { proxy_pass http://localhost:3007; }
+    location /api/xrpscan/ { proxy_pass http://localhost:3008; }
+    location /api/nfts/ { proxy_pass http://localhost:3010; }
+    
+    # --- SSL Certificate Settings ---
+    ssl_certificate /etc/letsencrypt/live/tokencanvas.io/fullchain.pem;
+    ssl_certificate_key /etc/letsencrypt/live/tokencanvas.io/privkey.pem;
+    include /etc/letsencrypt/options-ssl-nginx.conf;
+    ssl_dhparam /etc/letsencrypt/ssl-dhparams.pem;
+    
+    # --- Correct Security Headers with Netlify Permissions ---
+    add_header Strict-Transport-Security "max-age=31536000; includeSubDomains; preload" always;
+    add_header X-Frame-Options "SAMEORIGIN" always;
+    add_header X-Content-Type-Options "nosniff" always;
+    add_header Content-Security-Policy "default-src 'self'; script-src 'self' 'unsafe-inline' https://www.googletagmanager.com https://apis.google.com *.netlify.app; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; img-src 'self' data: https://res.cloudinary.com https://cdn.bithomp.com https://www.google.com https://origin.tokencanvas.io; connect-src 'self' https://*.google-analytics.com https://*.googletagmanager.com https://identitytoolkit.googleapis.com https://firestore.googleapis.com https://securetoken.googleapis.com https://apis.google.com *.netlify.app; frame-src 'self' https://tokencanvasio-f8163.firebaseapp.com; object-src 'none';" always;
+}
+
+# This second block catches all insecure HTTP traffic and forwards it to HTTPS.
+server {
+    listen 80;
+    listen [::]:80;
+    server_name tokencanvas.io www.tokencanvas.io xrpmemecoins.com www.xrpmemecoins.com origin.tokencanvas.io;
+    return 301 https://$host$request_uri;
+}

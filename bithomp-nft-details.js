@@ -1,9 +1,7 @@
 require('dotenv').config();
-// /functions/bithomp-nft-details.js
 const express = require('express');
 const axios = require('axios');
 const cors = require('cors');
-// Import the redis library
 const { createClient } = require('redis');
 
 const app = express();
@@ -16,6 +14,15 @@ redisClient.on('error', err => console.log('Redis Client Error', err));
 redisClient.connect();
 
 app.use(cors());
+
+// --- THIS IS THE NEW LOGGING MIDDLEWARE ---
+// It will run for every request that reaches this server.
+app.use((req, res, next) => {
+  console.log(`[Bithomp NFT Details Service] Received request for path: ${req.originalUrl}`);
+  next(); // Continue to the next route handler
+});
+// --- END OF NEW MIDDLEWARE ---
+
 
 // Helper function to create a predictable cache key
 const createStableCacheKey = (prefix, params) => {
@@ -35,7 +42,6 @@ app.get('/:nftId', async (req, res) => {
 
     const cacheKey = `bithomp_nft_full_${nftId}`;
     
-    // Check Redis for cached data
     const cachedData = await redisClient.get(cacheKey);
     if (cachedData) {
         console.log(`Cache HIT for Bithomp NFT: ${cacheKey}`);
@@ -54,7 +60,6 @@ app.get('/:nftId', async (req, res) => {
       headers: { 'x-bithomp-token': apiKey }
     });
 
-    // Save the successful response to Redis with a 1-hour expiration (3600s)
     await redisClient.setEx(cacheKey, 3600, JSON.stringify(response.data));
 
     res.status(200).json(response.data);

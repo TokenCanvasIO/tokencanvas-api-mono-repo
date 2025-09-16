@@ -7,7 +7,6 @@ const { createClient } = require('redis');
 const app = express();
 const PORT = 3003;
 
-// --- FINAL, UNIFIED REDIS CONNECTION ---
 const redisClient = createClient({
   url: process.env.REDIS_CONNECTION_URL 
 });
@@ -25,7 +24,44 @@ const createStableCacheKey = (prefix, params) => {
   return `${prefix}_${JSON.stringify(sortedParams)}`;
 };
 
-app.post('/coins/markets', async (req, res) => {
+// --- NEW SEARCH ROUTE ---
+// This new route specifically handles requests to '/api/search'
+app.get('/api/search', async (req, res) => {
+  const { query } = req.query;
+  if (!query) {
+    return res.status(400).json({ message: 'Query parameter is required.' });
+  }
+
+  const cacheKey = `coingecko_search_${query}`;
+  try {
+    const cachedData = await redisClient.get(cacheKey);
+    if (cachedData) {
+      console.log(`[CoinGecko Search] Cache HIT for: ${query}`);
+      return res.status(200).json(JSON.parse(cachedData));
+    }
+
+    console.log(`[CoinGecko Search] Cache MISS for: ${query}. Calling API.`);
+    const apiUrl = 'https://pro-api.coingecko.com/api/v3/search';
+    const response = await axios.get(apiUrl, {
+      params: { 
+        query: query,
+        x_cg_pro_api_key: process.env.COINGECKO_API_KEY 
+      }
+    });
+
+    // Cache the result for 5 minutes (300 seconds)
+    await redisClient.setEx(cacheKey, 300, JSON.stringify(response.data));
+    res.status(200).json(response.data);
+
+  } catch (error) {
+    console.error('CoinGecko Search Proxy Error:', error.message);
+    res.status(error.response?.status || 500).json(error.response?.data || { message: 'An internal error occurred.' });
+  }
+});
+
+
+// --- CORRECTED ROUTE ---
+app.post('/api/coingecko/coins/markets', async (req, res) => {
   try {
     const params = { ...req.body };
     const cacheKey = createStableCacheKey('coingecko_markets', params);
@@ -47,7 +83,8 @@ app.post('/coins/markets', async (req, res) => {
   }
 });
 
-app.get('/coins/:id/tickers', async (req, res) => {
+// --- CORRECTED ROUTE ---
+app.get('/api/coingecko/coins/:id/tickers', async (req, res) => {
     const { id } = req.params;
     const cacheKey = `coingecko_tickers_${id}`;
     try {
@@ -69,9 +106,11 @@ app.get('/coins/:id/tickers', async (req, res) => {
     }
 });
     
-app.get('/*', async (req, res) => {
+// --- CORRECTED CATCH-ALL ROUTE ---
+app.get('/api/coingecko/*', async (req, res) => {
   try {
-    const endpoint = req.path;
+    // We need to strip the prefix before sending to CoinGecko
+    const endpoint = req.path.replace('/api/coingecko', '');
     const params = { ...req.query };
     const cacheKey = createStableCacheKey(`coingecko_${endpoint}`, params);
     const cachedData = await redisClient.get(cacheKey);
