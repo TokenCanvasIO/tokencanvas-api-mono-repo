@@ -1,4 +1,3 @@
-console.log("--- EXECUTING LATEST VERSION: xrpl-search-proxy.js (v.FINAL) ---");
 require('dotenv').config();
 const express = require('express');
 const axios = require('axios');
@@ -6,19 +5,18 @@ const cors = require('cors');
 const { createClient } = require('redis');
 
 const app = express();
-const PORT = 3018; 
+const PORT = 3009; 
 
-// Build the Redis configuration dynamically.
-const redisConfig = {
-  socket: { host: '127.0.0.1', port: 6379 }
-};
+let redisClient;
 
-// This now checks if the password exists AND is not an empty string.
-if (process.env.REDIS_PASSWORD && process.env.REDIS_PASSWORD.length > 0) {
-  redisConfig.password = process.env.REDIS_PASSWORD;
+if (process.env.REDIS_URL) {
+  // Production environment (like Render)
+  redisClient = createClient({ url: process.env.REDIS_URL });
+} else {
+  // Local development environment
+  redisClient = createClient(); 
 }
 
-const redisClient = createClient(redisConfig);
 redisClient.on('error', err => console.log('[XRPL Search] Redis Client Error', err));
 redisClient.connect();
 
