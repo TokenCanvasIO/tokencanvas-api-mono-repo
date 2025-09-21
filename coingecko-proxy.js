@@ -1,20 +1,24 @@
-require('dotenv').config();
+require('dotenv').config({ path: '/var/app/.env' });
 const express = require('express');
 const axios = require('axios');
-const cors = require('cors');
+
 const { createClient } = require('redis');
 
 const app = express();
 const PORT = 3003;
 
+// This is the NEW, corrected code
 const redisClient = createClient({
-  url: process.env.REDIS_CONNECTION_URL 
+    password: process.env.REDIS_PASSWORD,
+    socket: {
+        host: '127.0.0.1', // or your redis host
+        port: 6379
+    }
 });
 redisClient.on('error', err => console.log('Redis Client Error', err));
 redisClient.connect();
 
 app.use(express.json()); 
-app.use(cors());
 
 const createStableCacheKey = (prefix, params) => {
   const sortedParams = Object.keys(params).sort().reduce((obj, key) => {

@@ -1,14 +1,15 @@
-// google-search-proxy.js
-
-require('dotenv').config();
+// functions/google-search-proxy.cjs# --- START OF SCRIPT ---
 const express = require('express');
 const axios = require('axios');
-const cors = require('cors');
+const dotenv = require('dotenv');
+
+// Correctly locate the .env file from the project root
+dotenv.config({ path: require('path').resolve(__dirname, '../../.env') });
 
 const app = express();
-const PORT = 3015; // A new port for our new service
+const PORT = 3013;
 
-app.use(cors());
+// This service does not need app.use(cors()) because Nginx handles it.
 
 app.get('/api/google-search', async (req, res) => {
   const { query } = req.query;
@@ -16,7 +17,7 @@ app.get('/api/google-search', async (req, res) => {
   const searchEngineId = process.env.GOOGLE_SEARCH_ENGINE_ID;
 
   if (!apiKey || !searchEngineId) {
-    return res.status(500).json({ message: 'API Key or Search Engine ID is not configured on the server.' });
+    return res.status(500).json({ message: 'API Key or Search Engine ID is not configured.' });
   }
 
   if (!query) {
@@ -31,7 +32,7 @@ app.get('/api/google-search', async (req, res) => {
         key: apiKey,
         cx: searchEngineId,
         q: query,
-        num: 10 // We'll fetch 10 results per search
+        num: 10
       }
     });
 
